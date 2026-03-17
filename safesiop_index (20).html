@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SafeS&OP</title>
+<meta name="description" content="Forecast sell-in y sell-out para importadores chilenos. El mismo número para todos.">
+<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Lato',sans-serif;background:#F0EEE9;color:#1A1A2E;}
+
+nav{padding:0 48px;height:56px;display:flex;align-items:center;justify-content:space-between;border-bottom:0.5px solid rgba(26,26,46,0.1);position:sticky;top:0;background:#F0EEE9;z-index:10;}
+.logo{font-family:'Libre Baskerville',serif;font-size:16px;font-weight:400;color:#1A1A2E;}
+.logo span{font-style:italic;color:#4A7C6F;}
+.nl{display:flex;gap:28px;}
+.nl a{font-size:11px;color:rgba(26,26,46,0.38);text-decoration:none;letter-spacing:1.5px;text-transform:uppercase;}
+.bn{font-family:'Lato',sans-serif;font-size:10px;padding:9px 20px;background:transparent;color:#1A1A2E;border:0.5px solid rgba(26,26,46,0.35);cursor:pointer;letter-spacing:1.5px;text-transform:uppercase;transition:all 0.2s;}
+.bn:hover{background:#1A1A2E;color:#F0EEE9;}
+
+.hero{padding:88px 48px 80px;text-align:center;border-bottom:0.5px solid rgba(26,26,46,0.08);}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border:0.5px solid rgba(26,26,46,0.15);border-radius:20px;font-size:9px;letter-spacing:2px;color:rgba(26,26,46,0.4);text-transform:uppercase;margin-bottom:32px;}
+.pill-dot{width:5px;height:5px;border-radius:50%;background:#4A7C6F;}
+h1{font-family:'Libre Baskerville',serif;font-size:56px;font-weight:400;line-height:1.1;letter-spacing:-1.5px;color:#1A1A2E;max-width:620px;margin:0 auto 20px;}
+h1 em{font-style:italic;color:#4A7C6F;}
+.hero-sub{font-size:15px;color:rgba(26,26,46,0.48);line-height:1.75;font-weight:300;max-width:440px;margin:0 auto 36px;}
+.hero-btns{display:flex;gap:12px;justify-content:center;}
+.btn-p{font-family:'Lato',sans-serif;font-size:10px;padding:13px 28px;background:#1A1A2E;color:#F0EEE9;border:none;cursor:pointer;letter-spacing:2px;text-transform:uppercase;transition:opacity 0.2s;}
+.btn-p:hover{opacity:0.85;}
+.btn-s{font-family:'Lato',sans-serif;font-size:10px;padding:13px 28px;background:transparent;color:#1A1A2E;border:0.5px solid rgba(26,26,46,0.3);cursor:pointer;letter-spacing:2px;text-transform:uppercase;transition:all 0.2s;}
+.btn-s:hover{background:#1A1A2E;color:#F0EEE9;}
+
+.band{padding:14px 48px;border-bottom:0.5px solid rgba(26,26,46,0.08);display:flex;align-items:center;justify-content:center;gap:18px;flex-wrap:wrap;background:rgba(26,26,46,0.02);}
+.bi{font-size:10px;color:rgba(26,26,46,0.3);letter-spacing:1px;text-transform:uppercase;}
+.bi strong{color:#4A7C6F;font-weight:700;}
+.bd{color:rgba(26,26,46,0.15);}
+
+.feats{padding:80px 48px;border-bottom:0.5px solid rgba(26,26,46,0.08);background:#FAFAF8;}
+.sl{font-size:9px;letter-spacing:3px;color:#4A7C6F;text-transform:uppercase;margin-bottom:12px;}
+.st{font-family:'Libre Baskerville',serif;font-size:34px;font-weight:400;color:#1A1A2E;margin-bottom:48px;line-height:1.2;}
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.f{background:#fff;padding:30px;border:0.5px solid rgba(26,26,46,0.07);}
+.f-dot{width:6px;height:6px;border-radius:50%;background:#4A7C6F;margin-bottom:14px;}
+.f h3{font-size:11px;font-weight:700;color:#1A1A2E;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;}
+.f p{font-size:13px;color:rgba(26,26,46,0.45);line-height:1.65;font-weight:300;}
+
+.stats{display:grid;grid-template-columns:repeat(3,1fr);background:#1A1A2E;}
+.stat{padding:52px 40px;border-right:0.5px solid rgba(255,255,255,0.06);text-align:center;}
+.stat:last-child{border-right:none;}
+.stn{font-family:'Libre Baskerville',serif;font-size:56px;font-weight:400;color:#F0EEE9;letter-spacing:-2px;line-height:1;margin-bottom:12px;}
+.stn span{color:#4A7C6F;}
+.stat p{font-size:12px;color:rgba(255,255,255,0.3);line-height:1.6;font-weight:300;max-width:180px;margin:0 auto;}
+
+.cta{padding:80px 48px;text-align:center;background:#F0EEE9;}
+.cta h2{font-family:'Libre Baskerville',serif;font-size:44px;font-weight:400;color:#1A1A2E;line-height:1.1;margin-bottom:10px;}
+.cta h2 em{font-style:italic;color:#4A7C6F;}
+.cta-sub{font-size:13px;color:rgba(26,26,46,0.35);margin-bottom:28px;font-style:italic;font-family:'Libre Baskerville',serif;}
+.cta-detail{font-size:9px;color:rgba(26,26,46,0.22);letter-spacing:1.5px;text-transform:uppercase;margin-top:16px;}
+
+footer{padding:18px 48px;border-top:0.5px solid rgba(26,26,46,0.08);display:flex;align-items:center;justify-content:space-between;}
+footer p{font-size:9px;color:rgba(26,26,46,0.2);letter-spacing:1.5px;text-transform:uppercase;}
+
+@media(max-width:768px){
+  nav{padding:0 24px;}
+  .nl{display:none;}
+  .hero{padding:56px 24px 48px;}
+  h1{font-size:38px;letter-spacing:-1px;}
+  .hero-btns{flex-direction:column;align-items:center;}
+  .band{padding:12px 24px;gap:12px;}
+  .feats{padding:52px 24px;}
+  .fg{grid-template-columns:1fr;}
+  .stats{grid-template-columns:1fr;}
+  .stat{border-right:none;border-bottom:0.5px solid rgba(255,255,255,0.06);padding:36px 24px;}
+  .stat:last-child{border-bottom:none;}
+  .cta{padding:52px 24px;}
+  .cta h2{font-size:34px;}
+  footer{padding:16px 24px;flex-direction:column;gap:6px;text-align:center;}
+}
+</style>
+</head>
+<body>
+<nav>
+  <div class="logo">Safe<span>S&OP</span></div>
+  <div class="nl">
+    <a href="#producto">producto</a>
+    <a href="#demo">demo</a>
+    <a href="#precios">precios</a>
+  </div>
+  <button class="bn" onclick="location.href='mailto:hola@safesiop.com?subject=Demo SafeS%26OP'">ver demo →</button>
+</nav>
+
+<section class="hero" id="producto">
+  <div class="pill"><span class="pill-dot"></span>forecast · sell-in · sell-out · inventario</div>
+  <h1>El mismo número<br>para <em>todos</em>.</h1>
+  <p class="hero-sub">Forecast mensual por SKU con estacionalidad automática. Exportable a Excel. Sin conectores. Sin IT.</p>
+  <div class="hero-btns">
+    <button class="btn-p" onclick="location.href='mailto:hola@safesiop.com?subject=Demo SafeS%26OP'">ver demo gratis →</button>
+    <button class="btn-s" onclick="document.querySelector('.feats').scrollIntoView({behavior:'smooth'})">cómo funciona</button>
+  </div>
+</section>
+
+<div class="band">
+  <span class="bi">Sin conectores</span><span class="bd">·</span>
+  <span class="bi">Sin IT</span><span class="bd">·</span>
+  <span class="bi">Sin cambiar nada</span><span class="bd">·</span>
+  <span class="bi"><strong>Empiezas hoy</strong></span>
+</div>
+
+<section class="feats" id="demo">
+  <div class="sl">por qué SafeS&OP</div>
+  <div class="st">Todo lo que necesitas<br>para el lunes</div>
+  <div class="fg">
+    <div class="f"><div class="f-dot"></div><h3>Forecast sell-in y sell-out</h3><p>Proyección con estacionalidad real. Sin fórmulas. Sin parámetros. Solo el número.</p></div>
+    <div class="f"><div class="f-dot"></div><h3>Inventario en tiempo real</h3><p>Bodega y tienda en una vista. Cobertura en semanas calculada automáticamente.</p></div>
+    <div class="f"><div class="f-dot"></div><h3>GFK optativo</h3><p>Sube la data de mercado. Ve tu share en contexto. El GM lo va a querer.</p></div>
+    <div class="f"><div class="f-dot"></div><h3>Exporta a Excel</h3><p>Tu equipo sigue con su planilla. SafeS&OP les da el número correcto adentro.</p></div>
+  </div>
+</section>
+
+<div class="stats">
+  <div class="stat"><div class="stn">8<span>h</span></div><p>duración promedio de una reunión S&OP cuando los números no coinciden</p></div>
+  <div class="stat"><div class="stn">3</div><p>fuentes de data distintas que nadie ha logrado alinear hasta hoy</p></div>
+  <div class="stat"><div class="stn"><span>1</span></div><p>número que necesitas para tomar la decisión correcta</p></div>
+</div>
+
+<section class="cta" id="precios">
+  <h2>¿Listo para<br><em>empezar?</em></h2>
+  <p class="cta-sub">Demo gratuita. Sin datos confidenciales. Sin compromiso.</p>
+  <button class="btn-p" onclick="location.href='mailto:hola@safesiop.com?subject=Demo SafeS%26OP'">solicitar demo →</button>
+  <div class="cta-detail">hola@safesiop.com · safesiop.com · Conatus Analysis AB · Stockholm</div>
+</section>
+
+<footer>
+  <p>© 2026 SafeS&OP · Conatus Analysis AB</p>
+  <p>safesiop.com</p>
+</footer>
+</body>
+</html>
