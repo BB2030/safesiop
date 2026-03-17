@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SafeS&OP — Planner</title>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+:root{--ink:#0f0f0f;--mid:#6b6b6b;--line:#e8e8e8;--bg:#f9f8f6;--white:#fff;--accent:#1a1a47;--green:#0f7c4a;--red:#c8202a;--amber:#b85c00;--r:10px;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--ink);font-size:14px;}
+.topbar{background:var(--accent);height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 1.5rem;}
+.logo{font-family:'Libre Baskerville',serif;color:white;font-size:1rem;}
+.logo b{background:linear-gradient(90deg,#ba28dd,#f53c57,#fe5300);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.badge{background:rgba(255,255,255,.15);color:rgba(255,255,255,.8);font-size:.63rem;padding:3px 10px;border-radius:20px;letter-spacing:.06em;text-transform:uppercase;}
+.back-link{color:rgba(255,255,255,.6);font-size:.75rem;text-decoration:none;display:flex;align-items:center;gap:4px;}
+.back-link:hover{color:white;}
+.grad-bar{height:3px;background:linear-gradient(90deg,#ba28dd,#f53c57,#fe5300);}
+.container{max-width:900px;margin:0 auto;padding:1.5rem;}
+
+.hero{text-align:center;padding:1.5rem 1rem 1.25rem;background:white;border-radius:14px;border:1px solid var(--line);margin-bottom:1.25rem;}
+.hero-title{font-family:'Libre Baskerville',serif;font-size:1.35rem;font-weight:700;margin-bottom:.4rem;}
+.hero-sub{font-size:.85rem;color:var(--mid);line-height:1.6;}
+
+.two-panels{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;}
+.panel{background:white;border-radius:14px;border:2px solid var(--line);padding:1.25rem;display:flex;flex-direction:column;gap:1rem;}
+.panel.si{border-top:4px solid var(--accent);}
+.panel.inv{border-top:4px solid var(--green);}
+.panel-header{display:flex;align-items:center;gap:.6rem;}
+.panel-num{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.85rem;font-weight:700;color:white;flex-shrink:0;}
+.si .panel-num{background:var(--accent);} .inv .panel-num{background:var(--green);}
+.panel-title{font-family:'Libre Baskerville',serif;font-size:1rem;font-weight:700;}
+.panel-badge{font-size:.62rem;font-weight:700;padding:2px 8px;border-radius:20px;text-transform:uppercase;letter-spacing:.05em;}
+.si .panel-badge{background:#e8eeff;color:var(--accent);} .inv .panel-badge{background:#e8f5ee;color:var(--green);}
+.explain{border-radius:8px;padding:.85rem 1rem;font-size:.78rem;line-height:1.7;}
+.si .explain{background:#f0f4ff;border:1px solid #c8d4f0;} .inv .explain{background:#f0faf4;border:1px solid #b8ddc8;}
+.ex-row{display:flex;align-items:flex-start;gap:.4rem;margin-bottom:.3rem;}
+.ex-row:last-child{margin-bottom:0;}
+.col-tag{display:inline-block;background:#1a1a47;color:white;font-size:.6rem;font-weight:700;padding:1px 6px;border-radius:4px;margin:0 1px;}
+.col-tag.yl{background:#c87000;}
+.dl-link{display:flex;align-items:center;gap:.6rem;padding:.7rem .9rem;border-radius:8px;border:1.5px dashed var(--line);background:var(--bg);cursor:pointer;font-size:.8rem;font-weight:600;transition:all .15s;font-family:'DM Sans',sans-serif;color:var(--ink);width:100%;}
+.dl-link:hover{border-color:var(--accent);background:#f0f4ff;color:var(--accent);}
+.upload-box{border:2.5px dashed var(--line);border-radius:10px;padding:1.5rem 1rem;text-align:center;cursor:pointer;transition:all .2s;background:var(--bg);flex:1;}
+.upload-box:hover{border-color:var(--accent);background:#f0f4ff;}
+.upload-box.dragover{transform:scale(1.02);}
+.upload-box.loaded{border-style:solid;}
+.si .upload-box.loaded{border-color:var(--accent);background:#eef0ff;}
+.inv .upload-box.loaded{border-color:var(--green);background:#e8f5ee;}
+.ub-emoji{font-size:2rem;margin-bottom:.4rem;}
+.ub-title{font-size:.9rem;font-weight:700;margin-bottom:.2rem;}
+.si .upload-box .ub-title{color:var(--accent);}
+.inv .upload-box .ub-title{color:var(--green);}
+.ub-hint{font-size:.72rem;color:var(--mid);}
+.mini-alert{padding:.5rem .75rem;border-radius:6px;font-size:.74rem;display:none;margin-top:.4rem;}
+.mini-alert.error{background:#fde8e8;color:var(--red);}
+.mini-alert.success{background:#e8f5ee;color:var(--green);}
+.mini-alert.show{display:block;}
+.gen-wrap{background:white;border-radius:14px;border:2px solid var(--line);padding:1.5rem;text-align:center;margin-bottom:1rem;transition:all .2s;}
+.gen-wrap.ready{border-color:var(--green);background:#f0faf4;}
+.btn-gen{padding:14px 40px;border-radius:9px;font-size:1.05rem;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;border:none;background:#ccc;color:white;transition:all .2s;}
+.btn-gen.ready{background:var(--green);box-shadow:0 4px 14px rgba(15,124,74,.3);}
+.btn-gen.ready:hover{opacity:.9;transform:translateY(-1px);}
+.gen-hint{font-size:.78rem;color:var(--mid);margin-top:.6rem;}
+.gen-wrap.ready .gen-hint{color:var(--green);font-weight:600;}
+
+/* SAVING INDICATOR */
+.saving-indicator{display:none;align-items:center;gap:6px;font-size:.75rem;color:var(--accent);margin-top:.5rem;}
+.saving-indicator.show{display:flex;justify-content:center;}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* RESULT */
+.btn{padding:10px 20px;border-radius:7px;font-size:.85rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;border:none;transition:all .15s;display:inline-flex;align-items:center;gap:7px;}
+.btn:hover{opacity:.88;}
+.btn-green{background:var(--green);color:white;}
+.btn-big{font-size:1rem;padding:13px 32px;}
+.btn-outline{background:white;color:var(--accent);border:2px solid var(--accent);}
+.sku-grid{display:flex;flex-wrap:wrap;gap:6px;margin:.4rem 0;}
+.sku-chip{padding:6px 12px;border-radius:20px;font-size:.78rem;font-weight:500;cursor:pointer;border:1.5px solid var(--line);background:white;transition:all .15s;font-family:'DM Sans',sans-serif;}
+.sku-chip.on{background:var(--accent);color:white;border-color:var(--accent);}
+.sku-chip.fensa.on{background:#0055a5;border-color:#0055a5;}
+.sku-chip.mademsa.on{background:#c8202a;border-color:#c8202a;}
+.sku-chip.electrolux.on{background:#009b77;border-color:#009b77;}
+.h-btns{display:inline-flex;gap:4px;}
+.h-btn{padding:6px 14px;border:1.5px solid var(--line);background:white;border-radius:6px;font-size:.78rem;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:.15s;}
+.h-btn.on{background:var(--accent);color:white;border-color:var(--accent);}
+.krow{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:1rem;}
+.kpi{background:white;border-radius:var(--r);border:1px solid var(--line);padding:.85rem .9rem;}
+.kl{font-size:.6rem;text-transform:uppercase;letter-spacing:.08em;color:var(--mid);font-weight:600;margin-bottom:3px;}
+.kv{font-family:'Libre Baskerville',serif;font-size:1.35rem;font-weight:700;line-height:1;}
+.kd{font-size:.7rem;font-weight:500;margin-top:3px;}
+.up{color:var(--green);}.dn{color:var(--red);}.nu{color:var(--mid);}
+.card{background:white;border-radius:var(--r);border:1px solid var(--line);padding:1rem;margin-bottom:.9rem;}
+.ct{font-family:'Libre Baskerville',serif;font-size:.9rem;font-weight:700;margin-bottom:.2rem;}
+.cs{font-size:.72rem;color:var(--mid);margin-bottom:.9rem;}
+.cw{position:relative;height:250px;}
+table{width:100%;border-collapse:collapse;font-size:.77rem;}
+thead th{padding:7px 10px;text-align:right;font-size:.6rem;text-transform:uppercase;letter-spacing:.08em;color:var(--mid);font-weight:600;border-bottom:2px solid var(--line);background:var(--bg);white-space:nowrap;}
+thead th:first-child,thead th:nth-child(2),thead th:nth-child(3){text-align:left;}
+tbody td{padding:7px 10px;border-bottom:1px solid #f0f0f0;text-align:right;color:#2a2a2a;}
+tbody td:first-child,tbody td:nth-child(2),tbody td:nth-child(3){text-align:left;font-weight:500;}
+tbody tr.fc td{color:var(--accent);font-weight:600;background:#f5f6ff;}
+tbody tr.fc td:first-child::before{content:'▸ ';font-size:.6em;opacity:.5;}
+.pill{display:inline-flex;font-size:.66rem;font-weight:600;padding:2px 7px;border-radius:20px;}
+.pg{background:#e6f5ee;color:var(--green);}.pr{background:#fde8e8;color:var(--red);}.pa{background:#fef3e8;color:var(--amber);}.pf{background:#f0f4ff;color:var(--accent);}
+.hidden{display:none;}
+@media(max-width:640px){.two-panels{grid-template-columns:1fr;}.krow{grid-template-columns:repeat(2,1fr);}}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div style="display:flex;align-items:center;gap:1rem;">
+    <a href="safesiop_dashboard.html" class="back-link">← Dashboard</a>
+    <div class="logo">Safe<b>S&OP</b> <span style="font-size:.7rem;opacity:.45;-webkit-text-fill-color:rgba(255,255,255,.45);margin-left:5px;">Planner · Sell-IN</span></div>
+  </div>
+  <span class="badge">📊 Planner</span>
+</div>
+<div class="grad-bar"></div>
+
+<div class="container">
+<div id="vistaCarga">
+  <div class="hero">
+    <div class="hero-title">Forecast Sell-IN — Planner</div>
+    <div class="hero-sub">
+      Necesitas <strong>2 archivos de SAP</strong> — histórico de compras y stock de bodega hoy.<br>
+      Cuando subas los datos, el Dashboard se actualizará en verde automáticamente ✅
+    </div>
+  </div>
+
+  <div class="two-panels">
+    <!-- SELL-IN -->
+    <div class="panel si">
+      <div class="panel-header">
+        <div class="panel-num">1</div>
+        <div><div class="panel-title">Sell-IN Histórico</div><span class="panel-badge">SAP VF05</span></div>
+      </div>
+      <div class="explain">
+        <div class="ex-row"><span>📋</span><span><strong>Qué es:</strong> Lo que importaste a Chile cada mes por SKU</span></div>
+        <div class="ex-row"><span>⚙️</span><span><strong>De dónde:</strong> SAP → <strong>VF05</strong> → Exportar Excel</span></div>
+        <div class="ex-row"><span>📅</span><span><strong>Período:</strong> Mínimo 12 meses · idealmente 24 meses</span></div>
+        <div class="ex-row"><span>📊</span><span><strong>Columnas:</strong> <span class="col-tag">AÑO</span><span class="col-tag">MES</span><span class="col-tag">MARCA</span><span class="col-tag">SKU</span><span class="col-tag yl">UNIDADES</span></span></div>
+      </div>
+      <button class="dl-link" onclick="dlSI()">⬇️ &nbsp;<span><strong>Descargar Template Sell-IN</strong><br><small style="font-weight:400;color:var(--mid)">Ábrelo · borra ejemplo · pega tu SAP</small></span></button>
+      <div class="upload-box" id="ubSI" onclick="document.getElementById('fiSI').click()" ondragover="dv(event,'over','ubSI')" ondragleave="dv(event,'leave','ubSI')" ondrop="dv(event,'drop','ubSI','si')">
+        <div class="ub-emoji" id="emSI">📊</div>
+        <div class="ub-title" id="ttSI">Sube tu archivo Sell-IN aquí</div>
+        <div class="ub-hint" id="stSI">Haz clic o arrastra el Excel llenado</div>
+        <input type="file" id="fiSI" accept=".xlsx,.xls" style="display:none" onchange="fs(event,'si')">
+      </div>
+      <div id="aSI" class="mini-alert"></div>
+      <div class="saving-indicator" id="savingSI"><div class="spinner"></div>Guardando en SafeS&OP...</div>
+    </div>
+
+    <!-- INVENTARIO BODEGA -->
+    <div class="panel inv">
+      <div class="panel-header">
+        <div class="panel-num">2</div>
+        <div><div class="panel-title">Inventario Bodega Hoy</div><span class="panel-badge">SAP MB52</span></div>
+      </div>
+      <div class="explain">
+        <div class="ex-row"><span>🏭</span><span><strong>Qué es:</strong> El stock que tienes <strong>ahora</strong> en bodega</span></div>
+        <div class="ex-row"><span>⚙️</span><span><strong>De dónde:</strong> SAP → <strong>MB52</strong> → Exportar Excel</span></div>
+        <div class="ex-row"><span>📌</span><span><strong>Importante:</strong> <strong>Una fila por SKU</strong> — el stock de HOY</span></div>
+        <div class="ex-row"><span>📊</span><span><strong>Columnas:</strong> <span class="col-tag">MARCA</span><span class="col-tag">SKU</span><span class="col-tag yl">STOCK_HOY</span></span></div>
+      </div>
+      <button class="dl-link" onclick="dlINV()">⬇️ &nbsp;<span><strong>Descargar Template Inventario</strong><br><small style="font-weight:400;color:var(--mid)">Ábrelo · borra ejemplo · pega tu SAP</small></span></button>
+      <div class="upload-box" id="ubINV" onclick="document.getElementById('fiINV').click()" ondragover="dv(event,'over','ubINV')" ondragleave="dv(event,'leave','ubINV')" ondrop="dv(event,'drop','ubINV','inv')">
+        <div class="ub-emoji" id="emINV">🏭</div>
+        <div class="ub-title" id="ttINV">Sube tu archivo Inventario aquí</div>
+        <div class="ub-hint" id="stINV">Haz clic o arrastra el Excel llenado</div>
+        <input type="file" id="fiINV" accept=".xlsx,.xls" style="display:none" onchange="fs(event,'inv')">
+      </div>
+      <div id="aINV" class="mini-alert"></div>
+      <div class="saving-indicator" id="savingINV"><div class="spinner"></div>Guardando en SafeS&OP...</div>
+    </div>
+  </div>
+
+  <div class="gen-wrap" id="genWrap">
+    <button class="btn-gen" id="btnGen" onclick="generar()">▶ &nbsp; GENERAR FORECAST SELL-IN</button>
+    <div class="gen-hint" id="genHint">Sube los 2 archivos para activar el forecast</div>
+    <div style="margin-top:.75rem;font-size:.74rem;color:var(--mid);">
+      ¿No tienes SAP? &nbsp;<span style="color:var(--accent);cursor:pointer;text-decoration:underline;" onclick="ejemplo()">Probar con ejemplo →</span>
+    </div>
+  </div>
+</div>
+
+<div id="vistaRes" class="hidden">
+  <div class="card" style="padding:.85rem 1rem;">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem;">
+      <div>
+        <span style="font-size:.63rem;text-transform:uppercase;letter-spacing:.08em;color:var(--mid);font-weight:600;">SKU</span>
+        <div class="sku-grid" id="skuGrid"></div>
+      </div>
+      <div>
+        <span style="font-size:.63rem;text-transform:uppercase;letter-spacing:.08em;color:var(--mid);font-weight:600;">Horizonte</span>
+        <div style="margin-top:.4rem;"><div class="h-btns"><button class="h-btn on" onclick="setH(3,this)">3M</button><button class="h-btn" onclick="setH(6,this)">6M</button><button class="h-btn" onclick="setH(12,this)">12M</button></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="krow" id="krow"></div>
+  <div class="card"><div class="ct" id="cT">–</div><div class="cs" id="cS">–</div><div class="cw"><canvas id="mainC"></canvas></div></div>
+  <div class="card"><div class="ct">Detalle mensual</div><div class="cs">Últimos 6 meses + forecast · ▸ = proyectado</div><div style="overflow-x:auto"><table id="detT"></table></div></div>
+  <div style="display:flex;gap:.75rem;margin-bottom:1.5rem;flex-wrap:wrap;">
+    <button class="btn btn-green btn-big" onclick="dlExcel()">↓ &nbsp; Descargar Forecast Excel</button>
+    <button class="btn btn-outline" onclick="volver()">← Subir otros archivos</button>
+  </div>
+</div>
+</div>
+
+<script>
+// ── CONFIG SUPABASE ───────────────────────────────────────────────
+const SUPA_URL = 'https://smqbvizeyptzvdavdevv.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNtcWJ2aXpleXB0enZkYXZkZXZ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3NTA1NTIsImV4cCI6MjA4OTMyNjU1Mn0.y0Rdj2dYOd23g3yC4X2YEljWRY6Wz2091SBH4G_sBfk';
+
+async function guardarEnSupabase(tipo, filename, data, skus, nFilas) {
+  try {
+    const body = {
+      empresa: 'Electrolux Chile',
+      tipo, usuario: 'planner', filename,
+      periodo_ini: data[Object.keys(data)[0]]?.serie[0] ? `${data[Object.keys(data)[0]].serie[0].mes}/${data[Object.keys(data)[0]].serie[0].año}` : null,
+      periodo_fin: null,
+      skus: skus,
+      n_filas: nFilas,
+      data: data
+    };
+    await fetch(`${SUPA_URL}/rest/v1/safesiop_uploads`, {
+      method: 'POST',
+      headers: {'apikey':SUPA_KEY,'Authorization':`Bearer ${SUPA_KEY}`,'Content-Type':'application/json','Prefer':'return=minimal'},
+      body: JSON.stringify(body)
+    });
+    // Actualizar status
+    await fetch(`${SUPA_URL}/rest/v1/safesiop_status?tipo=eq.${tipo}`, {
+      method: 'PATCH',
+      headers: {'apikey':SUPA_KEY,'Authorization':`Bearer ${SUPA_KEY}`,'Content-Type':'application/json'},
+      body: JSON.stringify({status:'ok', filename, skus, n_filas: nFilas, updated_at: new Date().toISOString()})
+    });
+  } catch(e) { console.warn('Supabase no disponible:', e.message); }
+}
+
+// ── ESTADO ────────────────────────────────────────────────────────
+let SI=null, INV=null, SKU=null, H=3, CH=null;
+
+function dv(e,t,zid){
+  e.preventDefault();
+  const z=document.getElementById(zid);
+  if(t==='over')z.classList.add('dragover');
+  else if(t==='leave')z.classList.remove('dragover');
+  else if(t==='drop'){z.classList.remove('dragover');const tipo=zid==='ubSI'?'si':'inv';const f=e.dataTransfer.files[0];if(f)leer(f,tipo);}
+}
+function fs(e,tipo){const f=e.target.files[0];if(f)leer(f,tipo);}
+
+async function leer(file,tipo){
+  const r=new FileReader();
+  r.onload=async function(e){
+    try{
+      const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
+      const sn=tipo==='si'
+        ?(wb.SheetNames.find(n=>n.toLowerCase().includes('sell')||n.toLowerCase().includes('in')))||wb.SheetNames[0]
+        :(wb.SheetNames.find(n=>n.toLowerCase().includes('inv')||n.toLowerCase().includes('stock')))||wb.SheetNames[0];
+      const rows=XLSX.utils.sheet_to_json(wb.Sheets[sn],{header:1,defval:''});
+      if(tipo==='si'){
+        const res=parseSI(rows);
+        if(res.error){alerta('aSI','error',res.error);return;}
+        SI=res.data;
+        zoneDone('ubSI','emSI','ttSI','stSI','✅',`${file.name} — ${Object.keys(res.data).length} SKU(s)`,`${Object.keys(res.data).join(', ')} · ${res.n} filas`);
+        alerta('aSI','success',`✓ ${res.n} filas · ${Object.keys(res.data).length} SKU(s)`);
+        // Guardar en Supabase
+        document.getElementById('savingSI').classList.add('show');
+        await guardarEnSupabase('sellin', file.name, res.data, Object.keys(res.data), res.n);
+        document.getElementById('savingSI').classList.remove('show');
+      } else {
+        const res=parseINV(rows);
+        if(res.error){alerta('aINV','error',res.error);return;}
+        INV=res.data;
+        zoneDone('ubINV','emINV','ttINV','stINV','✅',`${file.name} — ${Object.keys(res.data).length} SKU(s)`,`Stock cargado para: ${Object.keys(res.data).join(', ')}`);
+        alerta('aINV','success',`✓ Stock de ${Object.keys(res.data).length} SKU(s) cargado`);
+        document.getElementById('savingINV').classList.add('show');
+        await guardarEnSupabase('inv_bodega', file.name, res.data, Object.keys(res.data), Object.keys(res.data).length);
+        document.getElementById('savingINV').classList.remove('show');
+      }
+      checkReady();
+    }catch(err){alerta(tipo==='si'?'aSI':'aINV','error','No se pudo leer. Usa el template descargado arriba.');}
+  };
+  r.readAsArrayBuffer(file);
+}
+
+function zoneDone(zid,eid,tid,sid,em,tt,st){
+  document.getElementById(zid).classList.add('loaded');
+  document.getElementById(eid).textContent=em;
+  document.getElementById(tid).textContent=tt;
+  document.getElementById(sid).textContent=st;
+}
+function checkReady(){
+  const btn=document.getElementById('btnGen'),hint=document.getElementById('genHint'),wrap=document.getElementById('genWrap');
+  if(SI&&INV){btn.className='btn-gen ready';wrap.classList.add('ready');hint.textContent='¡Todo listo! Los datos ya están en el Dashboard ✅';wrap.scrollIntoView({behavior:'smooth',block:'center'});}
+  else if(SI)hint.textContent='✓ Sell-IN cargado · Falta el archivo de Inventario';
+  else if(INV)hint.textContent='✓ Inventario cargado · Falta el archivo de Sell-IN';
+}
+
+// ── PARSERS ───────────────────────────────────────────────────────
+function parseSI(rows){
+  const data={};let n=0;
+  for(let i=0;i<rows.length;i++){
+    const r=rows[i];if(!r||r.length<5)continue;
+    if(isNaN(parseInt(r[0])))continue;
+    const año=parseInt(r[0]),mes=parseInt(r[1]);
+    const marca=String(r[2]).trim().toUpperCase(),sku=String(r[3]).trim();
+    const un=parseInt(String(r[4]).replace(/[^0-9]/g,''));
+    if(isNaN(año)||isNaN(mes)||!sku||isNaN(un))continue;
+    if(mes<1||mes>12||año<2000||año>2100)continue;
+    if(!data[sku])data[sku]={marca,serie:[]};
+    data[sku].serie.push({año,mes,unidades:un});n++;
+  }
+  const skus=Object.keys(data);
+  if(!skus.length)return{error:'No encontré datos. ¿Usaste el template Sell-IN? Columnas: AÑO · MES · MARCA · SKU · UNIDADES'};
+  skus.forEach(s=>data[s].serie.sort((a,b)=>a.año!==b.año?a.año-b.año:a.mes-b.mes));
+  return{data,n};
+}
+function parseINV(rows){
+  const data={};
+  for(let i=0;i<rows.length;i++){
+    const r=rows[i];if(!r||r.length<3)continue;
+    const r1=String(r[1]).trim();
+    if(r1.toUpperCase()==='SKU'||r1.toUpperCase()==='MARCA'||!r1)continue;
+    const stock=parseInt(String(r[2]).replace(/[^0-9]/g,''));
+    if(!r1||isNaN(stock))continue;
+    data[r1]=stock;
+  }
+  if(!Object.keys(data).length)return{error:'No encontré datos. ¿Usaste el template Inventario? Columnas: MARCA · SKU · STOCK_HOY'};
+  return{data};
+}
+
+// ── FORECAST ──────────────────────────────────────────────────────
+function fcast(hist,h){
+  const n=hist.length;if(n<2)return new Array(h).fill(hist[0]||0);
+  const ss=new Array(12).fill(0),sc=new Array(12).fill(0);
+  hist.forEach((v,i)=>{ss[i%12]+=v;sc[i%12]++;});
+  const si=ss.map((s,i)=>s/(sc[i]||1)),avg=si.reduce((a,b)=>a+b,0)/12;
+  const norm=si.map(v=>avg>0?v/avg:1);
+  const xm=(n-1)/2;let num=0,den=0;
+  hist.forEach((v,i)=>{num+=(i-xm)*v;den+=(i-xm)**2;});
+  const sl=num/(den||1),ic=hist.reduce((a,b)=>a+b,0)/n-sl*xm;
+  return Array.from({length:h},(_,i)=>Math.max(0,Math.round((ic+sl*(n+i))*norm[(n+i)%12])));
+}
+const ML=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+function mL(y,m){return `${ML[m-1]} ${y}`;}
+function fcL(ly,lm,h){const o=[];let y=ly,m=lm+1;for(let i=0;i<h;i++){if(m>12){m=1;y++;}o.push({y,m,label:mL(y,m)});m++;}return o;}
+
+function generar(){if(!SI||!INV)return;SKU=Object.keys(SI)[0];document.getElementById('vistaCarga').classList.add('hidden');document.getElementById('vistaRes').classList.remove('hidden');buildChips();render();}
+function buildChips(){const MC={FENSA:'fensa',MADEMSA:'mademsa',ELECTROLUX:'electrolux'};document.getElementById('skuGrid').innerHTML=Object.keys(SI).map(s=>`<button class="sku-chip ${MC[SI[s].marca]||''} ${s===SKU?'on':''}" onclick="selSKU('${s}')">${s}</button>`).join('');}
+function selSKU(s){SKU=s;buildChips();render();}
+function setH(h,btn){H=h;document.querySelectorAll('.h-btn').forEach(b=>b.classList.remove('on'));btn.classList.add('on');render();}
+
+function render(){
+  const d=SI[SKU],hist=d.serie.map(r=>r.unidades),histL=d.serie.map(r=>mL(r.año,r.mes));
+  const lr=d.serie[d.serie.length-1],fm=fcL(lr.año,lr.mes,H),fc=fcast(hist,H);
+  const avg=Math.round(hist.reduce((a,b)=>a+b,0)/hist.length);
+  const stock=INV[SKU]||0,last=hist[hist.length-1],prev=hist[hist.length-2]||last;
+  const moM=prev>0?Math.round((last-prev)/prev*100):0;
+  const cob=(stock/Math.max(last,1)).toFixed(1),totalFC=fc.reduce((a,b)=>a+b,0);
+  let sp=stock;const spFc=fc.map(v=>{sp=Math.max(0,sp-Math.round(v*0.92));return sp;});
+  document.getElementById('krow').innerHTML=[
+    {l:'Sell-IN último mes',v:last.toLocaleString('es-CL')+' un',d:(moM>=0?'+':'')+moM+'% vs anterior',c:moM>=0?'up':'dn'},
+    {l:'Stock bodega HOY',v:stock.toLocaleString('es-CL')+' un',d:cob+' meses cobertura',c:parseFloat(cob)<1.5?'dn':parseFloat(cob)>4?'nu':'up'},
+    {l:'Promedio histórico',v:avg.toLocaleString('es-CL')+' un',d:d.serie.length+' meses base',c:'nu'},
+    {l:'Forecast '+H+'M total',v:totalFC.toLocaleString('es-CL')+' un',d:'Próx.mes: '+fc[0].toLocaleString('es-CL'),c:'up'},
+  ].map(k=>`<div class="kpi"><div class="kl">${k.l}</div><div class="kv">${k.v}</div><div class="kd ${k.c}">${k.d}</div></div>`).join('');
+  document.getElementById('cT').textContent=`${SKU}${d.marca?' · '+d.marca:''} — Sell-IN + Forecast ${H}M`;
+  document.getElementById('cS').textContent=`${histL[0]} → ${histL[histL.length-1]} (${d.serie.length} meses) · stock bodega hoy: ${stock.toLocaleString('es-CL')} un.`;
+  const allL=[...histL,...fm.map(m=>m.label)];
+  const siH=[...hist,...new Array(H).fill(null)],siF=[...new Array(d.serie.length).fill(null),...fc];
+  const stL=[...new Array(d.serie.length-1).fill(null),stock,...spFc];
+  const bH=siF.map(v=>v!=null?Math.round(v*1.2):null),bL=siF.map(v=>v!=null?Math.round(v*0.8):null);
+  if(CH)CH.destroy();
+  CH=new Chart(document.getElementById('mainC'),{type:'line',data:{labels:allL,datasets:[
+    {label:'Sell-IN histórico',data:siH,borderColor:'#1a1a47',backgroundColor:'rgba(26,26,71,.07)',fill:true,tension:.35,borderWidth:2.5,pointRadius:2.5},
+    {label:`Forecast ${H}M`,data:siF,borderColor:'#f53c57',fill:false,tension:.35,borderWidth:2.5,borderDash:[7,4],pointRadius:5,pointBackgroundColor:'#f53c57'},
+    {label:'Stock proyectado',data:stL,borderColor:'rgba(0,155,119,.7)',fill:false,tension:.3,borderWidth:2,borderDash:[4,3],pointRadius:3,yAxisID:'y2'},
+    {label:'+20%',data:bH,borderColor:'rgba(245,60,87,.15)',fill:false,tension:.35,borderWidth:1,borderDash:[2,5],pointRadius:0},
+    {label:'-20%',data:bL,borderColor:'rgba(245,60,87,.15)',fill:'-1',backgroundColor:'rgba(245,60,87,.04)',tension:.35,borderWidth:1,borderDash:[2,5],pointRadius:0},
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:11,font:{size:10},padding:12}},tooltip:{mode:'index',intersect:false}},scales:{x:{grid:{color:'#f0f0f0'},ticks:{font:{size:9},maxTicksLimit:16,maxRotation:0}},y:{grid:{color:'#f0f0f0'},ticks:{font:{size:9}},position:'left'},y2:{position:'right',grid:{display:false},ticks:{font:{size:9},color:'rgba(0,155,119,.6)'}}}}});
+  const h6=d.serie.slice(-6),l6=histL.slice(-6);
+  let rows=`<thead><tr><th>Mes</th><th>Marca</th><th>SKU</th><th>Sell-IN</th><th>Stock</th><th>Cobertura</th><th>vs Prom.</th><th>Estado</th></tr></thead><tbody>`;
+  h6.forEach((r,i)=>{const v=r.unidades,vA=avg>0?Math.round((v-avg)/avg*100):0,isL=(i===h6.length-1);const c2=isL?cob+'M':'-';const pill=isL?(parseFloat(cob)<1.5?'<span class="pill pr">⚠ Riesgo</span>':parseFloat(cob)>4?'<span class="pill pa">↑ Exceso</span>':'<span class="pill pg">✓ OK</span>'):'-';rows+=`<tr><td>${l6[i]}</td><td>${d.marca||'—'}</td><td>${SKU}</td><td>${v.toLocaleString('es-CL')}</td><td>${isL?stock.toLocaleString('es-CL'):'-'}</td><td>${c2}</td><td class="${vA>=0?'up':'dn'}">${vA>=0?'+':''}${vA}%</td><td>${pill}</td></tr>`;});
+  fm.forEach((m,i)=>{const v=fc[i],p2=i===0?hist[hist.length-1]:fc[i-1],mm2=p2>0?Math.round((v-p2)/p2*100):0;rows+=`<tr class="fc"><td>${m.label}</td><td>${d.marca||'—'}</td><td>${SKU}</td><td>${v.toLocaleString('es-CL')}</td><td>${spFc[i].toLocaleString('es-CL')}</td><td>${(spFc[i]/Math.max(v,1)).toFixed(1)}M</td><td class="${mm2>=0?'up':'dn'}">${mm2>=0?'+':''}${mm2}%</td><td><span class="pill pf">📊 Forecast</span></td></tr>`;});
+  document.getElementById('detT').innerHTML=rows+'</tbody>';
+}
+
+function dlExcel(){
+  const d=SI[SKU],hist=d.serie.map(r=>r.unidades),lr=d.serie[d.serie.length-1];
+  const fm=fcL(lr.año,lr.mes,H),fc=fcast(hist,H),avg=Math.round(hist.reduce((a,b)=>a+b,0)/hist.length);
+  const stock=INV[SKU]||0,wb=XLSX.utils.book_new();
+  const rows=[['SafeS&OP — Forecast Sell-IN','','','','',''],['SKU:',SKU,'Marca:',d.marca||'—','',''],['Stock bodega HOY:',stock,'','','',''],['Promedio histórico:',avg,'','','',''],['Generado:',new Date().toLocaleDateString('es-CL'),'','','',''],[''],['MES','AÑO','MARCA','SKU','TIPO','SELL-IN (UN)']];
+  d.serie.forEach(r=>rows.push([mL(r.año,r.mes),r.año,d.marca||'',SKU,'HISTÓRICO',r.unidades]));
+  fm.forEach((m,i)=>rows.push([m.label,m.y,d.marca||'',SKU,'FORECAST',fc[i]]));
+  const ws=XLSX.utils.aoa_to_sheet(rows);ws['!cols']=[{wch:12},{wch:6},{wch:12},{wch:14},{wch:12},{wch:14}];
+  XLSX.utils.book_append_sheet(wb,ws,'Forecast Sell-IN');
+  XLSX.writeFile(wb,`SafeS&OP_ForecastSellIN_${SKU}_${new Date().toISOString().slice(0,10)}.xlsx`);
+}
+
+function volver(){if(CH){CH.destroy();CH=null;}SI=null;INV=null;SKU=null;document.getElementById('vistaRes').classList.add('hidden');document.getElementById('vistaCarga').classList.remove('hidden');location.reload();}
+
+function ejemplo(){
+  const si=[['AÑO','MES','MARCA','SKU','UNIDADES'],[2024,1,'FENSA','LV-7500F',253],[2024,2,'FENSA','LV-7500F',214],[2024,3,'FENSA','LV-7500F',237],[2024,4,'FENSA','LV-7500F',281],[2024,5,'FENSA','LV-7500F',255],[2024,6,'FENSA','LV-7500F',204],[2024,7,'FENSA','LV-7500F',228],[2024,8,'FENSA','LV-7500F',296],[2024,9,'FENSA','LV-7500F',392],[2024,10,'FENSA','LV-7500F',418],[2024,11,'FENSA','LV-7500F',325],[2024,12,'FENSA','LV-7500F',296],[2025,1,'FENSA','LV-7500F',220],[2025,2,'FENSA','LV-7500F',193],[2025,3,'FENSA','LV-7500F',241],[2025,4,'FENSA','LV-7500F',288],[2025,5,'FENSA','LV-7500F',262],[2025,6,'FENSA','LV-7500F',208],[2025,7,'FENSA','LV-7500F',234],[2025,8,'FENSA','LV-7500F',304],[2025,9,'FENSA','LV-7500F',411],[2025,10,'FENSA','LV-7500F',438],[2025,11,'FENSA','LV-7500F',340],[2025,12,'FENSA','LV-7500F',308],[2026,1,'FENSA','LV-7500F',228],[2026,2,'FENSA','LV-7500F',199]];
+  const inv=[['MARCA','SKU','STOCK_HOY'],['FENSA','LV-7500F',595]];
+  SI=parseSI(si).data;INV=parseINV(inv).data;SKU='LV-7500F';
+  document.getElementById('vistaCarga').classList.add('hidden');document.getElementById('vistaRes').classList.remove('hidden');buildChips();render();
+}
+
+// TEMPLATES
+function dlSI(){
+  const wb=XLSX.utils.book_new();
+  const inst=[['📊 TEMPLATE SELL-IN — SafeS&OP'],[''],['QUÉ ES:','Histórico mensual de lo que importaste a Chile por SKU'],['DE DÓNDE:','SAP → Transacción VF05 → Exportar Excel'],[''],['PASOS:'],['1.','Abre la hoja SELL_IN (pestaña abajo ↓)'],['2.','Borra las filas de ejemplo (desde fila 2)'],['3.','Pega tu data de SAP desde fila 2'],['4.','Guarda con Ctrl+S'],['5.','Sube en SafeS&OP · Planner'],[''],['⚠️ NO cambies los encabezados de la fila 1'],['⚠️ NO dejes filas vacías'],['⚠️ UNIDADES = cuántas unidades importaste ese mes']];
+  const wI=XLSX.utils.aoa_to_sheet(inst);wI['!cols']=[{wch:14},{wch:55}];XLSX.utils.book_append_sheet(wb,wI,'INSTRUCCIONES');
+  const d=[['AÑO','MES','MARCA','SKU','UNIDADES'],[2024,1,'FENSA','LV-7500F',253],[2024,2,'FENSA','LV-7500F',214],[2024,3,'FENSA','LV-7500F',237],[2025,1,'FENSA','LV-7500F',220],[2025,2,'FENSA','LV-7500F',193],[2026,1,'FENSA','LV-7500F',228],[2026,2,'FENSA','LV-7500F',199]];
+  const wD=XLSX.utils.aoa_to_sheet(d);wD['!cols']=[{wch:7},{wch:6},{wch:12},{wch:14},{wch:13}];XLSX.utils.book_append_sheet(wb,wD,'SELL_IN');
+  XLSX.writeFile(wb,'SafeS&OP_Template_SellIN.xlsx');
+}
+function dlINV(){
+  const wb=XLSX.utils.book_new();
+  const inst=[['🏭 TEMPLATE INVENTARIO BODEGA — SafeS&OP'],[''],['QUÉ ES:','El stock que tienes HOY en bodega, por SKU'],['DE DÓNDE:','SAP → Transacción MB52 → Exportar Excel'],[''],['PASOS:'],['1.','Abre la hoja INVENTARIO_HOY (pestaña abajo ↓)'],['2.','Borra las filas de ejemplo (desde fila 2)'],['3.','Pega tu data de SAP desde fila 2'],['4.','Guarda con Ctrl+S'],['5.','Sube en SafeS&OP · Planner'],[''],['⚠️ UNA SOLA FILA por SKU — solo el stock de HOY'],['⚠️ NO el histórico — solo el número actual']];
+  const wI=XLSX.utils.aoa_to_sheet(inst);wI['!cols']=[{wch:14},{wch:55}];XLSX.utils.book_append_sheet(wb,wI,'INSTRUCCIONES');
+  const d=[['MARCA','SKU','STOCK_HOY'],['FENSA','LV-7500F',595],['FENSA','LV-9500F',342],['MADEMSA','LV-7500M',621],['ELECTROLUX','LV-11500E',178]];
+  const wD=XLSX.utils.aoa_to_sheet(d);wD['!cols']=[{wch:12},{wch:14},{wch:13}];XLSX.utils.book_append_sheet(wb,wD,'INVENTARIO_HOY');
+  XLSX.writeFile(wb,'SafeS&OP_Template_Inventario.xlsx');
+}
+function alerta(id,tipo,msg){const el=document.getElementById(id);el.className=`mini-alert ${tipo} show`;el.textContent=msg;setTimeout(()=>el.classList.remove('show'),6000);}
+</script>
+</body>
+</html>

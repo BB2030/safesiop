@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SafeS&OP — Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0f0f0f;--mid:#6b6b6b;--line:#e8e8e8;
+  --bg:#f9f8f6;--white:#fff;--accent:#1a1a47;
+  --green:#0f7c4a;--red:#c8202a;--amber:#b85c00;--r:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--ink);font-size:14px;}
+.topbar{background:var(--accent);height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 1.5rem;}
+.logo{font-family:'Libre Baskerville',serif;color:white;font-size:1.1rem;}
+.logo b{background:linear-gradient(90deg,#ba28dd,#f53c57,#fe5300);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.grad-bar{height:3px;background:linear-gradient(90deg,#ba28dd,#f53c57,#fe5300);}
+.container{max-width:960px;margin:0 auto;padding:1.5rem;}
+
+/* HEADER */
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;flex-wrap:wrap;gap:.5rem;}
+.page-title{font-family:'Libre Baskerville',serif;font-size:1.3rem;font-weight:700;}
+.page-sub{font-size:.8rem;color:var(--mid);margin-top:2px;}
+.refresh-btn{display:flex;align-items:center;gap:5px;padding:7px 14px;border-radius:7px;border:1.5px solid var(--line);background:white;font-size:.78rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;}
+.refresh-btn:hover{border-color:var(--accent);color:var(--accent);}
+
+/* STATUS GRID */
+.status-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:.75rem;margin-bottom:1.5rem;}
+
+.status-card{background:white;border-radius:12px;border:2px solid var(--line);padding:1rem;text-align:center;transition:all .2s;cursor:pointer;text-decoration:none;color:var(--ink);display:block;}
+.status-card:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.08);}
+.status-card.ok{border-color:var(--green);background:#f0faf4;}
+.status-card.pendiente{border-color:var(--line);}
+.status-card.opcional{border-color:#e0e0e0;opacity:.7;}
+
+.sc-icon{font-size:1.8rem;margin-bottom:.4rem;}
+.sc-label{font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;font-weight:700;color:var(--mid);margin-bottom:.3rem;}
+.status-card.ok .sc-label{color:var(--green);}
+.sc-title{font-size:.88rem;font-weight:700;margin-bottom:.25rem;}
+.sc-status{display:inline-flex;align-items:center;gap:4px;font-size:.7rem;font-weight:600;padding:3px 9px;border-radius:20px;margin-bottom:.4rem;}
+.dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.sc-status.ok{background:#e8f5ee;color:var(--green);}
+.sc-status.ok .dot{background:var(--green);}
+.sc-status.pendiente{background:#f5f5f5;color:var(--mid);}
+.sc-status.pendiente .dot{background:#ccc;}
+.sc-status.opcional{background:#fff8ed;color:var(--amber);}
+.sc-status.opcional .dot{background:var(--amber);}
+.sc-detail{font-size:.7rem;color:var(--mid);line-height:1.4;}
+.status-card.ok .sc-detail{color:#2d7a4a;}
+
+/* FORECAST PANEL */
+.forecast-panel{background:white;border-radius:14px;border:2px solid var(--line);padding:1.5rem;margin-bottom:1.25rem;transition:all .2s;}
+.forecast-panel.ready{border-color:var(--green);background:linear-gradient(135deg,#f0faf4 0%,white 100%);}
+.forecast-panel.partial{border-color:var(--amber);background:linear-gradient(135deg,#fff8ed 0%,white 100%);}
+
+.fp-header{display:flex;align-items:center;gap:1rem;margin-bottom:1rem;}
+.fp-icon{font-size:2rem;}
+.fp-title{font-family:'Libre Baskerville',serif;font-size:1rem;font-weight:700;}
+.fp-sub{font-size:.78rem;color:var(--mid);margin-top:2px;}
+
+.fp-reqs{display:flex;flex-direction:column;gap:4px;margin-bottom:1rem;}
+.fp-req{display:flex;align-items:center;gap:.5rem;font-size:.78rem;padding:5px 8px;border-radius:6px;background:var(--bg);}
+.fp-req .req-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.fp-req.ok{background:#e8f5ee;} .fp-req.ok .req-dot{background:var(--green);}
+.fp-req.missing .req-dot{background:#ccc;}
+
+.fp-btn{display:inline-flex;align-items:center;gap:7px;padding:11px 24px;border-radius:8px;font-size:.88rem;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;border:none;transition:all .15s;}
+.fp-btn.disabled{background:#e0e0e0;color:#aaa;cursor:not-allowed;}
+.fp-btn.ready{background:var(--green);color:white;box-shadow:0 3px 10px rgba(15,124,74,.25);}
+.fp-btn.ready:hover{opacity:.9;transform:translateY(-1px);}
+.fp-btn.partial{background:var(--amber);color:white;}
+
+/* ACTIVITY */
+.activity-title{font-family:'Libre Baskerville',serif;font-size:.9rem;font-weight:700;margin-bottom:.75rem;}
+.activity-list{display:flex;flex-direction:column;gap:4px;}
+.activity-item{display:flex;align-items:center;gap:.6rem;padding:8px 12px;border-radius:7px;background:white;border:1px solid var(--line);font-size:.78rem;}
+.activity-icon{font-size:.95rem;flex-shrink:0;}
+.activity-text{flex:1;color:var(--ink2);}
+.activity-time{font-size:.68rem;color:var(--mid);flex-shrink:0;}
+.activity-badge{font-size:.65rem;font-weight:700;padding:2px 7px;border-radius:20px;flex-shrink:0;}
+.badge-si{background:#e8eeff;color:var(--accent);}
+.badge-so{background:#fff3e0;color:#c87000;}
+.badge-inv{background:#e8f5ee;color:var(--green);}
+.badge-gfk{background:#f5f0ff;color:#6d28d9;}
+
+/* LOADING */
+.loading{text-align:center;padding:2rem;color:var(--mid);font-size:.85rem;}
+.spinner{display:inline-block;width:20px;height:20px;border:2px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;margin-right:8px;vertical-align:middle;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* USUARIO SELECTOR */
+.user-selector{display:flex;gap:.5rem;margin-bottom:1.25rem;}
+.user-btn{padding:8px 16px;border-radius:7px;border:1.5px solid var(--line);background:white;font-size:.8rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:.15s;}
+.user-btn.on{background:var(--accent);color:white;border-color:var(--accent);}
+
+@media(max-width:700px){.status-grid{grid-template-columns:repeat(2,1fr);}}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo">Safe<b>S&OP</b></div>
+  <span style="color:rgba(255,255,255,.6);font-size:.78rem;">Electrolux Chile · Dashboard</span>
+</div>
+<div class="grad-bar"></div>
+
+<div class="container">
+
+  <div class="page-header">
+    <div>
+      <div class="page-title">Dashboard S&OP</div>
+      <div class="page-sub" id="lastUpdate">Actualizando...</div>
+    </div>
+    <div style="display:flex;gap:.5rem;align-items:center;">
+      <div class="user-selector">
+        <button class="user-btn on" onclick="setUser('planner',this)">📊 Planner</button>
+        <button class="user-btn" onclick="setUser('kam',this)">🛒 KAM</button>
+        <button class="user-btn" onclick="setUser('gm',this)">👔 GM</button>
+      </div>
+      <button class="refresh-btn" onclick="cargarStatus()">↻ Actualizar</button>
+    </div>
+  </div>
+
+  <!-- STATUS SEMÁFOROS -->
+  <div class="status-grid" id="statusGrid">
+    <div class="loading"><span class="spinner"></span>Cargando...</div>
+  </div>
+
+  <!-- FORECAST PANELS -->
+  <div id="forecastPanels"></div>
+
+  <!-- ACTIVIDAD RECIENTE -->
+  <div>
+    <div class="activity-title">Actividad reciente</div>
+    <div class="activity-list" id="activityList">
+      <div class="loading"><span class="spinner"></span>Cargando actividad...</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── CONFIG ────────────────────────────────────────────────────────
+const SUPA_URL = 'https://smqbvizeyptzvdavdevv.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNtcWJ2aXpleXB0enZkYXZkZXZ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3NTA1NTIsImV4cCI6MjA4OTMyNjU1Mn0.y0Rdj2dYOd23g3yC4X2YEljWRY6Wz2091SBH4G_sBfk';
+
+async function supa(endpoint, opts={}) {
+  const res = await fetch(`${SUPA_URL}/rest/v1/${endpoint}`, {
+    headers: {
+      'apikey': SUPA_KEY,
+      'Authorization': `Bearer ${SUPA_KEY}`,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=representation',
+      ...opts.headers
+    },
+    ...opts
+  });
+  if(!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
+// ── ESTADO ────────────────────────────────────────────────────────
+let STATUS = {};
+let USUARIO = 'planner';
+let REFRESH_INTERVAL = null;
+
+function setUser(u, btn) {
+  USUARIO = u;
+  document.querySelectorAll('.user-btn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  renderForecastPanels();
+}
+
+// ── CARGAR STATUS ─────────────────────────────────────────────────
+async function cargarStatus() {
+  try {
+    const data = await supa('safesiop_status?select=*&order=tipo');
+    STATUS = {};
+    data.forEach(r => STATUS[r.tipo] = r);
+    renderStatusGrid();
+    renderForecastPanels();
+    await cargarActividad();
+    document.getElementById('lastUpdate').textContent =
+      'Última actualización: ' + new Date().toLocaleTimeString('es-CL');
+  } catch(e) {
+    console.error(e);
+    renderStatusGridOffline();
+  }
+}
+
+// ── STATUS GRID ───────────────────────────────────────────────────
+const TIPOS = [
+  {id:'sellin',     icon:'📊', label:'Planner',  title:'Sell-IN',         link:'safesiop_planner.html', rol:'planner'},
+  {id:'inv_bodega', icon:'🏭', label:'Planner',  title:'Inv. Bodega',     link:'safesiop_planner.html', rol:'planner'},
+  {id:'sellout',    icon:'🛒', label:'KAM',       title:'Sell-OUT',        link:'safesiop_kam.html',     rol:'kam'},
+  {id:'inv_retail', icon:'🏪', label:'KAM',       title:'Inv. Retail',     link:'safesiop_kam.html',     rol:'kam'},
+  {id:'gfk',        icon:'📈', label:'Opcional',  title:'GFK Mercado',     link:'safesiop_gfk.html',     rol:'gfk', opcional:true},
+];
+
+function renderStatusGrid() {
+  document.getElementById('statusGrid').innerHTML = TIPOS.map(t => {
+    const s = STATUS[t.id] || {status:'pendiente'};
+    const isOk = s.status === 'ok';
+    const css = t.opcional ? 'opcional' : (isOk ? 'ok' : 'pendiente');
+    const statusLabel = t.opcional ? 'Opcional' : (isOk ? 'OK' : 'Pendiente');
+    const detail = isOk
+      ? `${s.n_filas||''} filas · ${(s.skus||[]).length} SKUs<br><small>${timeAgo(s.updated_at)}</small>`
+      : `<a href="${t.link}" style="color:var(--accent);font-weight:600;font-size:.72rem;">→ Subir ahora</a>`;
+    return `
+      <a class="status-card ${css}" href="${t.link}">
+        <div class="sc-icon">${t.icon}</div>
+        <div class="sc-label">${t.label}</div>
+        <div class="sc-title">${t.title}</div>
+        <div class="sc-status ${t.opcional?'opcional':css}"><div class="dot"></div>${statusLabel}</div>
+        <div class="sc-detail">${detail}</div>
+      </a>`;
+  }).join('');
+}
+
+function renderStatusGridOffline() {
+  document.getElementById('statusGrid').innerHTML = TIPOS.map(t => `
+    <a class="status-card pendiente" href="${t.link}">
+      <div class="sc-icon">${t.icon}</div>
+      <div class="sc-label">${t.label}</div>
+      <div class="sc-title">${t.title}</div>
+      <div class="sc-status pendiente"><div class="dot"></div>Pendiente</div>
+      <div class="sc-detail"><a href="${t.link}" style="color:var(--accent);font-weight:600;font-size:.72rem;">→ Subir ahora</a></div>
+    </a>`).join('');
+}
+
+// ── FORECAST PANELS ───────────────────────────────────────────────
+const FORECASTS = [
+  {
+    id:'sellin_v1',
+    icon:'📊',
+    title:'Forecast Sell-IN v1',
+    sub:'Solo con datos del Planner',
+    reqs:['sellin','inv_bodega'],
+    link:'safesiop_planner.html',
+    roles:['planner','gm'],
+  },
+  {
+    id:'sellout_v1',
+    icon:'🛒',
+    title:'Forecast Sell-OUT v1',
+    sub:'Solo con datos del KAM',
+    reqs:['sellout','inv_retail'],
+    link:'safesiop_kam.html',
+    roles:['kam','gm'],
+  },
+  {
+    id:'cross_v2',
+    icon:'🎯',
+    title:'Forecast Cruzado v2.0',
+    sub:'Sell-IN + Sell-OUT juntos → mayor precisión',
+    reqs:['sellin','sellout','inv_bodega'],
+    link:'safesiop_cross.html',
+    roles:['planner','kam','gm'],
+    highlight:true,
+  },
+];
+
+function renderForecastPanels() {
+  const visible = FORECASTS.filter(f => f.roles.includes(USUARIO));
+  document.getElementById('forecastPanels').innerHTML = visible.map(f => {
+    const reqs = f.reqs.map(r => ({
+      id: r,
+      ok: STATUS[r]?.status === 'ok',
+      label: TIPOS.find(t=>t.id===r)?.title || r,
+    }));
+    const allOk = reqs.every(r=>r.ok);
+    const someOk = reqs.some(r=>r.ok);
+    const panelCss = allOk ? 'ready' : (someOk ? 'partial' : '');
+    const btnCss = allOk ? 'ready' : (someOk ? 'partial disabled' : 'disabled');
+    const btnText = allOk ? `▶ Generar ${f.title}` : `Faltan ${reqs.filter(r=>!r.ok).length} dato(s)`;
+    return `
+      <div class="forecast-panel ${panelCss}" style="margin-bottom:.75rem;${f.highlight?'border-width:2px;':''}" >
+        <div class="fp-header">
+          <div class="fp-icon">${f.icon}</div>
+          <div>
+            <div class="fp-title">${f.title}</div>
+            <div class="fp-sub">${f.sub}</div>
+          </div>
+        </div>
+        <div class="fp-reqs">
+          ${reqs.map(r=>`
+            <div class="fp-req ${r.ok?'ok':'missing'}">
+              <div class="req-dot"></div>
+              <span>${r.label} — ${r.ok?'✓ Datos cargados':'Pendiente'}</span>
+            </div>`).join('')}
+        </div>
+        <a href="${allOk?f.link:'#'}" class="fp-btn ${btnCss}" ${allOk?'':'onclick="return false"'}>
+          ${btnText}
+        </a>
+      </div>`;
+  }).join('');
+}
+
+// ── ACTIVIDAD ─────────────────────────────────────────────────────
+async function cargarActividad() {
+  try {
+    const data = await supa('safesiop_uploads?select=tipo,filename,usuario,n_filas,skus,created_at&order=created_at.desc&limit=8');
+    const BADGE = {sellin:'si',sellout:'so',inv_bodega:'inv',inv_retail:'inv',gfk:'gfk'};
+    const LABEL = {sellin:'Sell-IN',sellout:'Sell-OUT',inv_bodega:'Inv. Bodega',inv_retail:'Inv. Retail',gfk:'GFK'};
+    const ICON = {sellin:'📊',sellout:'🛒',inv_bodega:'🏭',inv_retail:'🏪',gfk:'📈'};
+    if(!data.length) {
+      document.getElementById('activityList').innerHTML =
+        '<div style="text-align:center;padding:1.5rem;color:var(--mid);font-size:.8rem;">Sin actividad aún — sube el primer archivo para comenzar</div>';
+      return;
+    }
+    document.getElementById('activityList').innerHTML = data.map(r=>`
+      <div class="activity-item">
+        <span class="activity-icon">${ICON[r.tipo]||'📄'}</span>
+        <div class="activity-text">
+          <strong>${r.filename}</strong> subido por <strong>${r.usuario}</strong> · ${r.n_filas||0} filas · ${(r.skus||[]).length} SKUs
+        </div>
+        <span class="activity-badge badge-${BADGE[r.tipo]||'si'}">${LABEL[r.tipo]||r.tipo}</span>
+        <span class="activity-time">${timeAgo(r.created_at)}</span>
+      </div>`).join('');
+  } catch(e) {
+    document.getElementById('activityList').innerHTML =
+      '<div style="text-align:center;padding:1rem;color:var(--mid);font-size:.8rem;">Sin actividad registrada</div>';
+  }
+}
+
+function timeAgo(iso) {
+  if(!iso) return '';
+  const diff = (Date.now() - new Date(iso)) / 1000;
+  if(diff < 60) return 'hace un momento';
+  if(diff < 3600) return `hace ${Math.round(diff/60)} min`;
+  if(diff < 86400) return `hace ${Math.round(diff/3600)}h`;
+  return new Date(iso).toLocaleDateString('es-CL');
+}
+
+// ── INIT ──────────────────────────────────────────────────────────
+cargarStatus();
+// Auto-refresh cada 30 segundos
+REFRESH_INTERVAL = setInterval(cargarStatus, 30000);
+</script>
+</body>
+</html>

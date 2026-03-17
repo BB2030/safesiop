@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SafeS&OP — Forecast Cruzado v2.0</title>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+:root{--ink:#0f0f0f;--mid:#6b6b6b;--line:#e8e8e8;--bg:#f9f8f6;--white:#fff;--accent:#1a1a47;--green:#0f7c4a;--red:#c8202a;--amber:#b85c00;--r:10px;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--ink);font-size:14px;}
+.topbar{background:var(--accent);height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 1.5rem;}
+.logo{font-family:'Libre Baskerville',serif;color:white;font-size:1rem;}
+.logo b{background:linear-gradient(90deg,#ba28dd,#f53c57,#fe5300);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.back-link{color:rgba(255,255,255,.6);font-size:.75rem;text-decoration:none;}
+.back-link:hover{color:white;}
+.grad-bar{height:3px;background:linear-gradient(90deg,#ba28dd,#f53c57,#fe5300);}
+.container{max-width:960px;margin:0 auto;padding:1.5rem;}
+
+/* LOADING OVERLAY */
+.loading-overlay{position:fixed;inset:0;background:rgba(26,26,71,.85);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1rem;z-index:100;}
+.loading-overlay.hidden{display:none;}
+.spinner-big{width:48px;height:48px;border:4px solid rgba(255,255,255,.2);border-top-color:white;border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loading-text{color:white;font-size:1rem;font-weight:600;}
+.loading-sub{color:rgba(255,255,255,.6);font-size:.8rem;}
+
+/* HERO */
+.hero{background:linear-gradient(135deg,var(--accent) 0%,#2d1b69 100%);border-radius:14px;padding:1.75rem;margin-bottom:1.25rem;color:white;text-align:center;}
+.hero-label{font-size:.65rem;text-transform:uppercase;letter-spacing:.1em;opacity:.6;margin-bottom:.5rem;font-weight:600;}
+.hero-title{font-family:'Libre Baskerville',serif;font-size:1.4rem;font-weight:700;margin-bottom:.4rem;}
+.hero-sub{font-size:.82rem;opacity:.75;line-height:1.6;}
+.hero-badges{display:flex;justify-content:center;gap:.5rem;margin-top:.75rem;flex-wrap:wrap;}
+.hb{background:rgba(255,255,255,.15);font-size:.68rem;font-weight:600;padding:3px 10px;border-radius:20px;}
+.hb.green{background:rgba(15,124,74,.4);}
+
+/* GAP ALERT */
+.gap-alert{border-radius:12px;padding:1rem 1.25rem;margin-bottom:1rem;display:flex;align-items:center;gap:.75rem;}
+.gap-alert.danger{background:#fde8e8;border:2px solid var(--red);}
+.gap-alert.warning{background:#fef3e8;border:2px solid var(--amber);}
+.gap-alert.ok{background:#e8f5ee;border:2px solid var(--green);}
+.gap-icon{font-size:1.75rem;flex-shrink:0;}
+.gap-title{font-weight:700;font-size:.9rem;margin-bottom:2px;}
+.gap-sub{font-size:.78rem;color:var(--mid);}
+
+/* KPIS */
+.krow{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:1rem;}
+.krow5{display:grid;grid-template-columns:repeat(5,1fr);gap:9px;margin-bottom:1rem;}
+.kpi{background:white;border-radius:var(--r);border:1px solid var(--line);padding:.85rem .9rem;}
+.kpi.highlight{border-color:var(--red);background:#fff8f8;}
+.kl{font-size:.6rem;text-transform:uppercase;letter-spacing:.08em;color:var(--mid);font-weight:600;margin-bottom:3px;}
+.kv{font-family:'Libre Baskerville',serif;font-size:1.35rem;font-weight:700;line-height:1;}
+.kd{font-size:.7rem;font-weight:500;margin-top:3px;}
+.up{color:var(--green);}.dn{color:var(--red);}.nu{color:var(--mid);}.warn{color:var(--amber);}
+
+/* CARDS */
+.card{background:white;border-radius:var(--r);border:1px solid var(--line);padding:1rem;margin-bottom:.9rem;}
+.ct{font-family:'Libre Baskerville',serif;font-size:.9rem;font-weight:700;margin-bottom:.2rem;}
+.cs{font-size:.72rem;color:var(--mid);margin-bottom:.9rem;}
+.cw{position:relative;height:260px;}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:.9rem;}
+
+/* SKU + H */
+.sku-grid{display:flex;flex-wrap:wrap;gap:6px;margin:.4rem 0;}
+.sku-chip{padding:6px 12px;border-radius:20px;font-size:.78rem;font-weight:500;cursor:pointer;border:1.5px solid var(--line);background:white;transition:all .15s;font-family:'DM Sans',sans-serif;}
+.sku-chip.on{background:var(--accent);color:white;border-color:var(--accent);}
+.h-btns{display:inline-flex;gap:4px;}
+.h-btn{padding:6px 14px;border:1.5px solid var(--line);background:white;border-radius:6px;font-size:.78rem;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:.15s;}
+.h-btn.on{background:var(--accent);color:white;border-color:var(--accent);}
+
+/* TABLE */
+table{width:100%;border-collapse:collapse;font-size:.77rem;}
+thead th{padding:7px 10px;text-align:right;font-size:.6rem;text-transform:uppercase;letter-spacing:.08em;color:var(--mid);font-weight:600;border-bottom:2px solid var(--line);background:var(--bg);white-space:nowrap;}
+thead th:first-child{text-align:left;}
+tbody td{padding:7px 10px;border-bottom:1px solid #f0f0f0;text-align:right;color:#2a2a2a;}
+tbody td:first-child{text-align:left;font-weight:500;}
+tbody tr.fc td{color:var(--accent);font-weight:600;background:#f5f6ff;}
+tbody tr.gap-row td{background:#fff8f8;}
+.pill{display:inline-flex;font-size:.66rem;font-weight:600;padding:2px 7px;border-radius:20px;}
+.pg{background:#e6f5ee;color:var(--green);}.pr{background:#fde8e8;color:var(--red);}.pa{background:#fef3e8;color:var(--amber);}.pf{background:#f0f4ff;color:var(--accent);}
+
+/* BTNS */
+.btn{padding:10px 20px;border-radius:7px;font-size:.85rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;border:none;transition:all .15s;display:inline-flex;align-items:center;gap:7px;}
+.btn:hover{opacity:.88;}
+.btn-green{background:var(--green);color:white;}
+.btn-big{font-size:1rem;padding:13px 32px;}
+.btn-outline{background:white;color:var(--accent);border:2px solid var(--accent);}
+
+.hidden{display:none;}
+@media(max-width:640px){.krow,.krow5{grid-template-columns:repeat(2,1fr);}.g2{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner-big"></div>
+  <div class="loading-text">Cargando datos de Supabase...</div>
+  <div class="loading-sub">Leyendo Sell-IN y Sell-OUT del equipo</div>
+</div>
+
+<div class="topbar">
+  <div style="display:flex;align-items:center;gap:1rem;">
+    <a href="safesiop_dashboard.html" class="back-link">← Dashboard</a>
+    <div class="logo">Safe<b>S&OP</b> <span style="font-size:.7rem;opacity:.45;-webkit-text-fill-color:rgba(255,255,255,.45);margin-left:5px;">Forecast Cruzado v2.0</span></div>
+  </div>
+  <span style="background:linear-gradient(90deg,#ba28dd,#f53c57,#fe5300);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-weight:700;font-size:.85rem;">v2.0 ★</span>
+</div>
+<div class="grad-bar"></div>
+
+<div class="container">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-label">Forecast Cruzado</div>
+    <div class="hero-title">El mismo número para todos 🎯</div>
+    <div class="hero-sub">Sell-IN del Planner + Sell-OUT del KAM = forecast con mayor precisión<br>El gap entre ambos es la herida del lunes — aquí la ves por primera vez</div>
+    <div class="hero-badges">
+      <span class="hb">📊 Planner: Sell-IN</span>
+      <span class="hb">🛒 KAM: Sell-OUT</span>
+      <span class="hb green">🎯 Forecast v2.0</span>
+    </div>
+  </div>
+
+  <!-- SKU + HORIZON SELECTOR -->
+  <div class="card" style="padding:.85rem 1rem;margin-bottom:.9rem;">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem;">
+      <div>
+        <span style="font-size:.63rem;text-transform:uppercase;letter-spacing:.08em;color:var(--mid);font-weight:600;">SKU</span>
+        <div class="sku-grid" id="skuGrid"></div>
+      </div>
+      <div>
+        <span style="font-size:.63rem;text-transform:uppercase;letter-spacing:.08em;color:var(--mid);font-weight:600;">Horizonte Forecast</span>
+        <div style="margin-top:.4rem;"><div class="h-btns"><button class="h-btn on" onclick="setH(3,this)">3M</button><button class="h-btn" onclick="setH(6,this)">6M</button><button class="h-btn" onclick="setH(12,this)">12M</button></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GAP ALERT -->
+  <div id="gapAlert"></div>
+
+  <!-- KPIS CROSS -->
+  <div class="krow5" id="krow"></div>
+
+  <!-- CHART PRINCIPAL: SI vs SO histórico + cross forecast -->
+  <div class="card">
+    <div class="ct" id="cT">–</div>
+    <div class="cs" id="cS">Sell-IN (Planner) vs Sell-OUT (KAM) · histórico real · forecast cruzado</div>
+    <div class="cw"><canvas id="mainC"></canvas></div>
+  </div>
+
+  <div class="g2">
+    <!-- GAP histórico -->
+    <div class="card">
+      <div class="ct">Gap SI vs SO — Histórico</div>
+      <div class="cs">Diferencia mensual entre lo que importaste y lo que se vendió</div>
+      <div class="cw"><canvas id="gapC"></canvas></div>
+    </div>
+    <!-- Inventario + cobertura -->
+    <div class="card">
+      <div class="ct">Stock Bodega + Proyección</div>
+      <div class="cs">Stock bodega hoy + proyección con forecast cruzado</div>
+      <div class="cw"><canvas id="stockC"></canvas></div>
+    </div>
+  </div>
+
+  <!-- TABLA CRUZADA -->
+  <div class="card">
+    <div class="ct">Tabla Cruzada — Últimos 6 meses + Forecast</div>
+    <div class="cs">Sell-IN · Sell-OUT · Gap · Cobertura · Forecast v2.0</div>
+    <div style="overflow-x:auto"><table id="crossTable"></table></div>
+  </div>
+
+  <!-- DOWNLOAD -->
+  <div style="display:flex;gap:.75rem;margin-bottom:1.5rem;flex-wrap:wrap;">
+    <button class="btn btn-green btn-big" onclick="dlExcel()">↓ &nbsp; Descargar Forecast Cruzado Excel</button>
+    <button class="btn btn-outline" onclick="window.location.href='safesiop_dashboard.html'">← Dashboard</button>
+  </div>
+
+</div>
+
+<script>
+// ── CONFIG ────────────────────────────────────────────────────────
+const SUPA_URL = 'https://smqbvizeyptzvdavdevv.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNtcWJ2aXpleXB0enZkYXZkZXZ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3NTA1NTIsImV4cCI6MjA4OTMyNjU1Mn0.y0Rdj2dYOd23g3yC4X2YEljWRY6Wz2091SBH4G_sBfk';
+
+// ── ESTADO ────────────────────────────────────────────────────────
+let SI_DATA=null, SO_DATA=null, INV_DATA=null;
+let SKU=null, H=3;
+let charts={};
+
+// ── CARGAR DATA DE SUPABASE ───────────────────────────────────────
+async function cargarDesdeSupabase() {
+  try {
+    const res = await fetch(
+      `${SUPA_URL}/rest/v1/safesiop_uploads?select=tipo,data,skus&tipo=in.(sellin,sellout,inv_bodega)&order=created_at.desc`,
+      {headers:{'apikey':SUPA_KEY,'Authorization':`Bearer ${SUPA_KEY}`}}
+    );
+    const rows = await res.json();
+
+    // Tomar el más reciente de cada tipo
+    const byTipo = {};
+    rows.forEach(r => { if(!byTipo[r.tipo]) byTipo[r.tipo]=r; });
+
+    SI_DATA  = byTipo['sellin']?.data || null;
+    SO_DATA  = byTipo['sellout']?.data || null;
+    INV_DATA = byTipo['inv_bodega']?.data || null;
+
+    document.getElementById('loadingOverlay').classList.add('hidden');
+
+    if(!SI_DATA || !SO_DATA) {
+      mostrarError();
+      return;
+    }
+
+    // SKUs que tienen ambos SI y SO
+    const skusSI = Object.keys(SI_DATA);
+    const skusSO = Object.keys(SO_DATA);
+    const skusComunes = skusSI.filter(s => skusSO.includes(s));
+
+    if(!skusComunes.length) {
+      mostrarError('Los SKUs del Sell-IN y Sell-OUT no coinciden. Verifica que usaron los mismos códigos de SKU.');
+      return;
+    }
+
+    SKU = skusComunes[0];
+    buildSkuGrid(skusComunes);
+    render();
+
+  } catch(e) {
+    console.error(e);
+    // Cargar ejemplo si no hay Supabase
+    cargarEjemplo();
+  }
+}
+
+function mostrarError(msg='Faltan datos. El Planner y el KAM deben subir sus archivos primero.') {
+  document.getElementById('loadingOverlay').classList.add('hidden');
+  document.querySelector('.container').innerHTML = `
+    <div style="text-align:center;padding:3rem;">
+      <div style="font-size:3rem;margin-bottom:1rem;">⚠️</div>
+      <div style="font-family:'Libre Baskerville',serif;font-size:1.1rem;font-weight:700;margin-bottom:.5rem;">Datos incompletos</div>
+      <div style="font-size:.85rem;color:var(--mid);margin-bottom:1.5rem;">${msg}</div>
+      <a href="safesiop_dashboard.html" style="background:var(--accent);color:white;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600;">← Ir al Dashboard</a>
+    </div>`;
+}
+
+// ── FORECAST ENGINE ───────────────────────────────────────────────
+function fcast(hist,h){
+  const n=hist.length;if(n<2)return new Array(h).fill(hist[0]||0);
+  const ss=new Array(12).fill(0),sc=new Array(12).fill(0);
+  hist.forEach((v,i)=>{ss[i%12]+=v;sc[i%12]++;});
+  const si=ss.map((s,i)=>s/(sc[i]||1)),avg=si.reduce((a,b)=>a+b,0)/12;
+  const norm=si.map(v=>avg>0?v/avg:1);
+  const xm=(n-1)/2;let num=0,den=0;
+  hist.forEach((v,i)=>{num+=(i-xm)*v;den+=(i-xm)**2;});
+  const sl=num/(den||1),ic=hist.reduce((a,b)=>a+b,0)/n-sl*xm;
+  return Array.from({length:h},(_,i)=>Math.max(0,Math.round((ic+sl*(n+i))*norm[(n+i)%12])));
+}
+
+// Forecast cruzado = promedio ponderado SI (40%) + SO (60%)
+function fcastCross(histSI, histSO, h) {
+  const fcSI = fcast(histSI, h);
+  const fcSO = fcast(histSO, h);
+  return fcSI.map((v,i) => Math.round(v*0.4 + fcSO[i]*0.6));
+}
+
+const ML=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+function mL(y,m){return `${ML[m-1]} ${y}`;}
+function fcLabels(ly,lm,h){const o=[];let y=ly,m=lm+1;for(let i=0;i<h;i++){if(m>12){m=1;y++;}o.push({y,m,label:mL(y,m)});m++;}return o;}
+
+// ── RENDER ────────────────────────────────────────────────────────
+function buildSkuGrid(skus){
+  document.getElementById('skuGrid').innerHTML=skus.map(s=>
+    `<button class="sku-chip ${s===SKU?'on':''}" onclick="selSKU('${s}')">${s}</button>`
+  ).join('');
+}
+function selSKU(s){SKU=s;document.querySelectorAll('.sku-chip').forEach(c=>{c.classList.toggle('on',c.textContent===s)});render();}
+function setH(h,btn){H=h;document.querySelectorAll('.h-btn').forEach(b=>b.classList.remove('on'));btn.classList.add('on');render();}
+
+function render(){
+  const dSI = SI_DATA[SKU];
+  const dSO = SO_DATA[SKU];
+  const stock = INV_DATA?.[SKU] || 0;
+
+  // Alinear series por fecha
+  const siMap={}, soMap={};
+  dSI.serie.forEach(r=>siMap[`${r.año}-${r.mes}`]=r.unidades);
+  dSO.serie.forEach(r=>soMap[`${r.año}-${r.mes}`]=r.unidades);
+
+  // Usar etiquetas del SI como base
+  const labels = dSI.serie.map(r=>mL(r.año,r.mes));
+  const histSI = dSI.serie.map(r=>r.unidades);
+  const histSO = dSI.serie.map(r=>soMap[`${r.año}-${r.mes}`]||0);
+  const gaps = histSI.map((v,i)=>v-histSO[i]);
+
+  const lr = dSI.serie[dSI.serie.length-1];
+  const fm = fcLabels(lr.año, lr.mes, H);
+  const fcSI = fcast(histSI, H);
+  const fcSO = fcast(histSO, H);
+  const fcCross = fcastCross(histSI, histSO, H);
+
+  // Stats
+  const avgSI = Math.round(histSI.reduce((a,b)=>a+b,0)/histSI.length);
+  const avgSO = Math.round(histSO.reduce((a,b)=>a+b,0)/histSO.filter(v=>v>0).length||1);
+  const lastGap = gaps[gaps.length-1];
+  const avgGap = Math.round(gaps.reduce((a,b)=>a+b,0)/gaps.length);
+  const cobStock = (stock/Math.max(histSI[histSI.length-1],1)).toFixed(1);
+  const totalCross = fcCross.reduce((a,b)=>a+b,0);
+
+  // Gap alert
+  const gapPct = avgSI>0?Math.round(Math.abs(avgGap)/avgSI*100):0;
+  let alertHtml='';
+  if(gapPct>20){
+    alertHtml=`<div class="gap-alert danger"><div class="gap-icon">🚨</div><div><div class="gap-title">Gap crítico: ${gapPct}% de diferencia promedio SI vs SO</div><div class="gap-sub">En promedio importas ${Math.abs(avgGap).toLocaleString('es-CL')} unidades ${avgGap>0?'MÁS':'MENOS'} de lo que se vende. Esta es la herida del lunes.</div></div></div>`;
+  } else if(gapPct>10){
+    alertHtml=`<div class="gap-alert warning"><div class="gap-icon">⚠️</div><div><div class="gap-title">Gap moderado: ${gapPct}% de diferencia SI vs SO</div><div class="gap-sub">Hay una brecha controlable. El forecast cruzado v2.0 la incorpora automáticamente.</div></div></div>`;
+  } else {
+    alertHtml=`<div class="gap-alert ok"><div class="gap-icon">✅</div><div><div class="gap-title">Gap saludable: ${gapPct}% de diferencia SI vs SO</div><div class="gap-sub">Planner y KAM están alineados. El forecast v2.0 confirma la tendencia.</div></div></div>`;
+  }
+  document.getElementById('gapAlert').innerHTML=alertHtml;
+
+  // KPIs
+  document.getElementById('krow').innerHTML=[
+    {l:'Sell-IN prom. histórico',v:avgSI.toLocaleString('es-CL')+' un',d:'Planner · '+dSI.serie.length+'M',c:'nu'},
+    {l:'Sell-OUT prom. histórico',v:avgSO.toLocaleString('es-CL')+' un',d:'KAM · '+histSO.filter(v=>v>0).length+'M',c:'nu'},
+    {l:'Gap promedio SI−SO',v:(avgGap>=0?'+':'')+avgGap.toLocaleString('es-CL')+' un',d:gapPct+'% de diferencia',c:gapPct>20?'dn':gapPct>10?'warn':'up',highlight:gapPct>20},
+    {l:'Stock bodega hoy',v:stock.toLocaleString('es-CL')+' un',d:cobStock+' meses cobertura',c:parseFloat(cobStock)<1.5?'dn':'up'},
+    {l:'Forecast cruzado '+H+'M',v:totalCross.toLocaleString('es-CL')+' un',d:'v2.0 · SI+SO',c:'up'},
+  ].map(k=>`<div class="kpi ${k.highlight?'highlight':''}"><div class="kl">${k.l}</div><div class="kv">${k.v}</div><div class="kd ${k.c}">${k.d}</div></div>`).join('');
+
+  document.getElementById('cT').textContent = `${SKU} · ${dSI.marca||''} — Sell-IN vs Sell-OUT + Forecast Cruzado v2.0`;
+
+  // Destroy old charts
+  Object.values(charts).forEach(c=>c?.destroy&&c.destroy());charts={};
+
+  const allL=[...labels,...fm.map(m=>m.label)];
+  const n=labels.length;
+
+  // Main chart
+  charts.main=new Chart(document.getElementById('mainC'),{type:'line',data:{labels:allL,datasets:[
+    {label:'Sell-IN (Planner)',data:[...histSI,...new Array(H).fill(null)],borderColor:'#1a1a47',backgroundColor:'rgba(26,26,71,.06)',fill:true,tension:.35,borderWidth:2,pointRadius:2},
+    {label:'Sell-OUT (KAM)',data:[...histSO,...new Array(H).fill(null)],borderColor:'#c87000',backgroundColor:'rgba(200,112,0,.06)',fill:true,tension:.35,borderWidth:2,pointRadius:2},
+    {label:'Forecast SI v1',data:[...new Array(n).fill(null),...fcSI],borderColor:'rgba(26,26,71,.4)',fill:false,tension:.35,borderWidth:1.5,borderDash:[4,4],pointRadius:2},
+    {label:'Forecast SO v1',data:[...new Array(n).fill(null),...fcSO],borderColor:'rgba(200,112,0,.4)',fill:false,tension:.35,borderWidth:1.5,borderDash:[4,4],pointRadius:2},
+    {label:'⭐ Forecast Cruzado v2.0',data:[...new Array(n).fill(null),...fcCross],borderColor:'#f53c57',fill:false,tension:.35,borderWidth:3,borderDash:[],pointRadius:6,pointBackgroundColor:'#f53c57'},
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:11,font:{size:10},padding:12}},tooltip:{mode:'index',intersect:false}},scales:{x:{grid:{color:'#f0f0f0'},ticks:{font:{size:9},maxTicksLimit:16,maxRotation:0}},y:{grid:{color:'#f0f0f0'},ticks:{font:{size:9}}}}}});
+
+  // Gap chart
+  charts.gap=new Chart(document.getElementById('gapC'),{type:'bar',data:{labels,datasets:[
+    {label:'Gap SI−SO',data:gaps,backgroundColor:gaps.map(v=>v>0?'rgba(200,112,0,.6)':'rgba(15,124,74,.6)'),borderRadius:3},
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`Gap: ${c.raw>0?'+':''}${c.raw.toLocaleString('es-CL')} un`}}},scales:{x:{grid:{display:false},ticks:{font:{size:9},maxTicksLimit:8,maxRotation:0}},y:{grid:{color:'#f0f0f0'},ticks:{font:{size:9}}}}}});
+
+  // Stock chart
+  let sp=stock;
+  const spFc=fcCross.map(v=>{sp=Math.max(0,sp-Math.round(v*0.88));return sp;});
+  const stockLine=[...new Array(n-1).fill(null),stock,...spFc];
+  charts.stock=new Chart(document.getElementById('stockC'),{type:'line',data:{labels:allL,datasets:[
+    {label:'Stock bodega',data:stockLine,borderColor:'var(--green)',backgroundColor:'rgba(15,124,74,.08)',fill:true,tension:.3,borderWidth:2.5,pointRadius:3},
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:'#f0f0f0'},ticks:{font:{size:9},maxTicksLimit:10,maxRotation:0}},y:{grid:{color:'#f0f0f0'},ticks:{font:{size:9}}}}}});
+
+  // Cross table
+  const h6SI=histSI.slice(-6),h6SO=histSO.slice(-6),l6=labels.slice(-6);
+  let rows=`<thead><tr><th>Mes</th><th>Sell-IN</th><th>Sell-OUT</th><th>Gap SI−SO</th><th>Gap %</th><th>Forecast v2.0</th><th>Estado</th></tr></thead><tbody>`;
+  h6SI.forEach((si,i)=>{
+    const so=h6SO[i],gap=si-so,gp=so>0?Math.round(gap/so*100):0;
+    const pill=Math.abs(gp)>20?'<span class="pill pr">⚠ Gap crítico</span>':Math.abs(gp)>10?'<span class="pill pa">Gap moderado</span>':'<span class="pill pg">✓ Alineado</span>';
+    rows+=`<tr class="${Math.abs(gp)>20?'gap-row':''}"><td>${l6[i]}</td><td>${si.toLocaleString('es-CL')}</td><td>${so.toLocaleString('es-CL')}</td><td class="${gap>0?'warn':'up'}">${gap>=0?'+':''}${gap.toLocaleString('es-CL')}</td><td class="${Math.abs(gp)>20?'dn':Math.abs(gp)>10?'warn':'up'}">${gp>=0?'+':''}${gp}%</td><td>—</td><td>${pill}</td></tr>`;
+  });
+  fm.forEach((m,i)=>{
+    rows+=`<tr class="fc"><td>${m.label}</td><td>${fcSI[i].toLocaleString('es-CL')}</td><td>${fcSO[i].toLocaleString('es-CL')}</td><td class="nu">—</td><td class="nu">—</td><td><strong>${fcCross[i].toLocaleString('es-CL')}</strong></td><td><span class="pill pf">⭐ v2.0</span></td></tr>`;
+  });
+  document.getElementById('crossTable').innerHTML=rows+'</tbody>';
+}
+
+// ── DOWNLOAD EXCEL ────────────────────────────────────────────────
+function dlExcel(){
+  const dSI=SI_DATA[SKU],dSO=SO_DATA[SKU];
+  const histSI=dSI.serie.map(r=>r.unidades);
+  const soMap={};dSO.serie.forEach(r=>soMap[`${r.año}-${r.mes}`]=r.unidades);
+  const histSO=dSI.serie.map(r=>soMap[`${r.año}-${r.mes}`]||0);
+  const lr=dSI.serie[dSI.serie.length-1];
+  const fm=fcLabels(lr.año,lr.mes,H);
+  const fcSI=fcast(histSI,H),fcSO=fcast(histSO,H),fcCross=fcastCross(histSI,histSO,H);
+  const wb=XLSX.utils.book_new();
+  const rows=[['SafeS&OP — Forecast Cruzado v2.0','','','','','',''],['SKU:',SKU,'Marca:',dSI.marca||'—','','',''],['Generado:',new Date().toLocaleDateString('es-CL'),'','','','',''],[''],['MES','SELL-IN','SELL-OUT','GAP SI-SO','GAP %','FORECAST SI v1','FORECAST SO v1','FORECAST CRUZADO v2.0']];
+  dSI.serie.forEach((r,i)=>{
+    const so=histSO[i],gap=r.unidades-so,gp=so>0?Math.round(gap/so*100):0;
+    rows.push([mL(r.año,r.mes),r.unidades,so,gap,gp+'%','','','']);
+  });
+  rows.push(['']);
+  fm.forEach((m,i)=>rows.push([m.label,'','','','',fcSI[i],fcSO[i],fcCross[i]]));
+  const ws=XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols']=[{wch:12},{wch:12},{wch:12},{wch:12},{wch:8},{wch:16},{wch:16},{wch:20}];
+  XLSX.utils.book_append_sheet(wb,ws,'Forecast Cruzado v2.0');
+  XLSX.writeFile(wb,`SafeS&OP_CrossForecast_${SKU}_${new Date().toISOString().slice(0,10)}.xlsx`);
+}
+
+// ── EJEMPLO OFFLINE ───────────────────────────────────────────────
+function cargarEjemplo(){
+  document.getElementById('loadingOverlay').classList.add('hidden');
+  SI_DATA={'LV-7500F':{marca:'FENSA',serie:[{año:2024,mes:1,unidades:253},{año:2024,mes:2,unidades:214},{año:2024,mes:3,unidades:237},{año:2024,mes:4,unidades:281},{año:2024,mes:5,unidades:255},{año:2024,mes:6,unidades:204},{año:2024,mes:7,unidades:228},{año:2024,mes:8,unidades:296},{año:2024,mes:9,unidades:392},{año:2024,mes:10,unidades:418},{año:2024,mes:11,unidades:325},{año:2024,mes:12,unidades:296},{año:2025,mes:1,unidades:220},{año:2025,mes:2,unidades:193},{año:2025,mes:3,unidades:241},{año:2025,mes:4,unidades:288},{año:2025,mes:5,unidades:262},{año:2025,mes:6,unidades:208},{año:2025,mes:7,unidades:234},{año:2025,mes:8,unidades:304},{año:2025,mes:9,unidades:411},{año:2025,mes:10,unidades:438},{año:2025,mes:11,unidades:340},{año:2025,mes:12,unidades:308},{año:2026,mes:1,unidades:228},{año:2026,mes:2,unidades:199}]}};
+  SO_DATA={'LV-7500F':{marca:'FENSA',serie:[{año:2024,mes:1,unidades:228},{año:2024,mes:2,unidades:195},{año:2024,mes:3,unidades:215},{año:2024,mes:4,unidades:251},{año:2024,mes:5,unidades:268},{año:2024,mes:6,unidades:188},{año:2024,mes:7,unidades:198},{año:2024,mes:8,unidades:271},{año:2024,mes:9,unidades:334},{año:2024,mes:10,unidades:389},{año:2024,mes:11,unidades:588},{año:2024,mes:12,unidades:348},{año:2025,mes:1,unidades:198},{año:2025,mes:2,unidades:175},{año:2025,mes:3,unidades:218},{año:2025,mes:4,unidades:261},{año:2025,mes:5,unidades:284},{año:2025,mes:6,unidades:188},{año:2025,mes:7,unidades:212},{año:2025,mes:8,unidades:278},{año:2025,mes:9,unidades:365},{año:2025,mes:10,unidades:412},{año:2025,mes:11,unidades:598},{año:2025,mes:12,unidades:362},{año:2026,mes:1,unidades:204},{año:2026,mes:2,unidades:181}]}};
+  INV_DATA={'LV-7500F':595};
+  SKU='LV-7500F';
+  buildSkuGrid(['LV-7500F']);
+  render();
+}
+
+// ── INIT ──────────────────────────────────────────────────────────
+cargarDesdeSupabase();
+</script>
+</body>
+</html>
